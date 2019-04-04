@@ -1,0 +1,3 @@
+/home/erik/code/project/0.2/src/build/CMakeFiles/rebuild_cache.dir
+/home/erik/code/project/0.2/src/build/CMakeFiles/myslam.dir
+/home/erik/code/project/0.2/src/build/CMakeFiles/edit_cache.dir
