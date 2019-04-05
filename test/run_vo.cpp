@@ -17,7 +17,7 @@ int main ( int argc, char** argv )
 //     }
     
     //将default.yaml的路径及名称关联到config_->file_,这是一个cv::FileStorage类型
-    myslam::Config::setParameterFile ("/home/erik/DataSets/vo_1/config/default.yaml");
+    myslam::Config::setParameterFile ("./config/default.yaml");
     
     
     //将file_中dataset_dir对应的内容（数据集路径）取出
@@ -85,7 +85,7 @@ int main ( int argc, char** argv )
     cout<<"read total "<<rgb_files.size() <<" entries"<<endl;
     
     //打开将被写入位姿数据的文件
-    ofstream fo("/home/erik/DataSets/vo_1/data.txt");
+    ofstream fo("./data.txt");
     if(!fo)
     {
         cout <<"failed to open file" <<endl;
