@@ -2,8 +2,11 @@
 # data
 # the tum dataset directory, change it to yours! 
 
-#dataset_dir: /home/erik/DataSets/DataSets/rgbd_dataset_freiburg1_xyz
-dataset_dir: /home/erik/DataSets/rgbd_dataset_freiburg1_xyz
+#virtual
+dataset_dir: /home/erik/DataSets/DataSets/rgbd_dataset_freiburg1_xyz
+#lab
+#dataset_dir: /home/erik/DataSets/rgbd_dataset_freiburg1_xyz
+
 # camera intrinsics
 # fr1
 camera.fx: 517.3
