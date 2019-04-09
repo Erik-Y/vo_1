@@ -17,7 +17,7 @@ int main ( int argc, char** argv )
 //     }
     
     //将default.yaml的路径及名称关联到config_->file_,这是一个cv::FileStorage类型
-    myslam::Config::setParameterFile ("./config/default.yaml");
+    myslam::Config::setParameterFile ("../config/default.yaml");
     
     
     //将file_中dataset_dir对应的内容（数据集路径）取出

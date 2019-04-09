@@ -1,0 +1,13 @@
+#set( CMAKE_CXX_COMPILER "g++" )
+set( CMAKE_BUILD_TYPE "Debug" )
+#set( CMAKE_CXX_FLAGS "-std=c++11" )
+set( CMAKE_CXX_FLAGS "-std=c++11 -march=native -O3" )
+
+########
+-march=native的含义是什么，为什么不加这一个会出现Crashed
+
+#######
+为什么lib是空的
+
+#######
+g2o优化后基本没有效果是为什么

@@ -4,7 +4,7 @@ add_library( myslam SHARED
     mappoint.cpp
     map.cpp
     camera.cpp
-    
+    g2o_edgetypes.cpp
     visual_odometry.cpp
 )#compile cpp documents to shared library called myslam
 

@@ -21,7 +21,7 @@ public:
     // coordinate transform: world, camera, pixel
    
     Vector3d pixel2camera( const Vector2d& p_p, double depth=1 ); 
-
+    Vector2d camera2pixel( const Vector3d& point_3d  );
 
 };
 

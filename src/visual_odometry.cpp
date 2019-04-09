@@ -24,9 +24,16 @@
 #include <boost/timer.hpp>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <g2o/core/block_solver.h>
+#include <g2o/solvers/dense/linear_solver_dense.h>
+#include <g2o/core/optimization_algorithm_levenberg.h>
+//#include<g2o/core/sparse_optimizer.h>
+#include <g2o/types/sba/types_six_dof_expmap.h>
 
 #include "myslam/config.h"
+#include "myslam/g2o_edgetypes.h"
 #include "myslam/visual_odometry.h"
+
 
 namespace myslam
 {
@@ -156,6 +163,53 @@ void VisualOdometry::poseEstimationPnP()//计算SE3形式的变换矩阵，保�
         SO3(rvec.at<double>(0,0), rvec.at<double>(1,0), rvec.at<double>(2,0)), 
         Vector3d( tvec.at<double>(0,0), tvec.at<double>(1,0), tvec.at<double>(2,0))
     );
+    
+  //g2o优化
+      typedef g2o::BlockSolverTraits<6,2>  Traits_6_2;
+    typedef g2o::BlockSolver< Traits_6_2 > blocksolver_6_2;
+  
+//     shared_ptr<blocksolver_6_2::LinearSolverType> linearsolver( new g2o::LinearSolverDense< blocksolver_6_2::PoseMatrixType>() );
+//     shared_ptr<blocksolver_6_2> blocksolver_6_2_ptr( new  blocksolver_6_2( linearsolver));
+     blocksolver_6_2::LinearSolverType* linearsolver( new g2o::LinearSolverDense< blocksolver_6_2::PoseMatrixType>() );
+     blocksolver_6_2* blocksolver_6_2_ptr( new  blocksolver_6_2( linearsolver));
+    
+    g2o::OptimizationAlgorithmLevenberg* optialgorithm_ptr( new g2o::OptimizationAlgorithmLevenberg( blocksolver_6_2_ptr ) );
+   
+    
+    //添加节点
+    g2o::SparseOptimizer optimizer;
+    optimizer.setAlgorithm( optialgorithm_ptr );
+    
+//     shared_ptr<g2o::VertexSE3Expmap> pose(new g2o::VertexSE3Expmap );
+    g2o::VertexSE3Expmap* pose(new g2o::VertexSE3Expmap );
+    pose->setId(0);
+    pose->setEstimate( g2o::SE3Quat(
+        T_c_r_estimated_.rotation_matrix(),
+        T_c_r_estimated_.translation()
+                              ) );
+    optimizer.addVertex(pose);
+   
+    for( int i = 0; i != inliers.rows; ++i )
+    {
+        int index = inliers.ptr<int>(i)[0];
+        myslam::Edge_PoseOnly*  edge(new myslam:: Edge_PoseOnly() );
+        edge->setId(i);
+        edge->setVertex(0, pose);
+        edge->camera_ = camera_;
+        edge->point_ = Eigen::Vector3d(pts3d[index].x,pts3d[index].y,pts3d[index].z);
+        edge->setMeasurement(Eigen::Vector2d(pts2d[index].x,pts2d[index].y));
+        edge->setInformation(Eigen::Matrix2d::Identity());
+        optimizer.addEdge( edge );
+    }
+    cout<<"here_1" <<endl;
+    optimizer.initializeOptimization();
+    optimizer.optimize(10);
+    T_c_r_estimated_ = Sophus::SE3(
+        pose->estimate().rotation(),
+        pose->estimate().translation()
+                                    );
+    
+    
 }
 
 void VisualOdometry::get_3d_points()

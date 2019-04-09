@@ -24,6 +24,14 @@ Vector3d Camera::pixel2camera ( const Vector2d& p_p, double depth )
     );
 }
 
+Vector2d Camera::camera2pixel( const Vector3d& point_3d  )
+{
+    return Vector2d(
+            point_3d[0]/point_3d[2]*fx_ + cx_,
+            point_3d[1]/point_3d[2]*fy_ + cy_
+    );
+}
+
 
 
 }
