@@ -20,6 +20,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/features2d/features2d.hpp>
 #include <algorithm>
 #include <boost/timer.hpp>
 #include <Eigen/Core>
@@ -29,6 +30,7 @@
 #include <g2o/core/optimization_algorithm_levenberg.h>
 //#include<g2o/core/sparse_optimizer.h>
 #include <g2o/types/sba/types_six_dof_expmap.h>
+#include <sophus/se3.h>
 
 #include "myslam/config.h"
 #include "myslam/g2o_edgetypes.h"
@@ -39,7 +41,7 @@ namespace myslam
 {
 
 VisualOdometry::VisualOdometry(): 
-     state_ ( INITIALIZING ), frame_refe_( nullptr ), frame_curr_( nullptr ), num_lost_ ( 0 ), num_inliers_ ( 0 ),camera_(nullptr)
+     state_ ( INITIALIZING ), frame_refe_( nullptr ), frame_curr_( nullptr ), num_lost_ ( 0 ), num_inliers_ ( 0 ),camera_(nullptr), matcher_( new cv::flann::LshIndexParams(5,10,2))
 {
    
     match_ratio_        = Config::get<float> ( "match_ratio" );
@@ -67,10 +69,12 @@ bool VisualOdometry::addFrame ( Frame::Ptr frame )
         frame_curr_->keypoints_detect();//将特征点提取到
         
         
+        
         frame_curr_ ->descriptor_compute();//将描述子保存到
         
         get_3d_points();
         frame_refe_ = frame_curr_;
+        
         
         
        
@@ -87,10 +91,20 @@ bool VisualOdometry::addFrame ( Frame::Ptr frame )
         features_match();//匹配当前描述子descriptors_和参考描述子descriptors_ref_，匹配结果保存在curr_feature_matches_.
         
         poseEstimationPnP();//计算SE3形式的变换矩阵，保存于T_c_r_estimated_，正确点个数保存于num_inliers
-        frame_curr_->T_c_w_ = T_c_r_estimated_ * frame_refe_->T_c_w_;  // T_c_w = T_c_r*T_r_w 
-        frame_refe_ = frame_curr_;
+        if( CheckEstimatePose() )
+        {
+            frame_curr_->T_c_w_ = T_c_r_estimated_ * frame_refe_->T_c_w_;  // T_c_w = T_c_r*T_r_w  
+            frame_refe_ = frame_curr_;
+            num_lost_ = 0;
+        }
+        else
+        {
+            ++num_lost_;
+            if( num_lost_ >= max_num_lost_ )
+                state_ = LOST;
+            return false;
+        }
         
-        num_lost_ = 0;
         break;
     }
 
@@ -110,8 +124,10 @@ void VisualOdometry::features_match()
 {
     //use OpenCV's brute force match 
     vector<cv::DMatch> matches_raw;
-    cv::BFMatcher matcher ( cv::NORM_HAMMING );
-    matcher.match ( frame_refe_->descriptors_, frame_curr_->descriptors_, matches_raw );
+   // cv::FlannBasedMatcher   matcher;
+   // cv::BFMatcher matcher ( cv::NORM_HAMMING );
+    matcher_.match ( frame_refe_->descriptors_, frame_curr_->descriptors_, matches_raw );
+    
     // select the best matches
     float min_dis = std::min_element (
                         matches_raw.begin(), matches_raw.end(),
@@ -119,13 +135,13 @@ void VisualOdometry::features_match()
     {
         return m1.distance < m2.distance;
     } )->distance;
-
+    
     matches_.clear();
-    for ( unsigned i = 0; i != matches_raw.size(); ++i )
+    for (auto m : matches_raw )
     {
-        if ( matches_raw[i].distance < max<float> ( min_dis*match_ratio_, 30.0 ) )
+        if ( m.distance < max<float> ( min_dis*match_ratio_, 30.0 ) )
         {
-            matches_.push_back(matches_raw[i]);
+            matches_.push_back(m);
         }
     }
     cout<<"good matches: "<<matches_.size()<<endl;
@@ -222,6 +238,22 @@ void VisualOdometry::get_3d_points()
       
         frame_curr_->points_3d_.push_back(cv::Point3f( p(0,0), p(1,0), p(2,0) ) );
     }
+}
+
+bool VisualOdometry::CheckEstimatePose()
+{
+    if( num_inliers_ < min_inliers_ )
+    {
+        cout <<"pose is rejected  because lacking of inliers !!!" <<endl;
+        return false;
+    }
+    Sophus::Vector6d pose6d = T_c_r_estimated_.log();
+    if( pose6d.norm() > 5.0 )
+    {
+        cout <<"pose is rejected  because motion is too large !!!" <<endl;
+        return false;
+    }
+    return true;
 }
 
 

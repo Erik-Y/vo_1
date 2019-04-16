@@ -62,8 +62,8 @@ void Frame::keypoints_detect()
     
     for( auto keypoint: keypoints_raw )
     {
-        double d = findDepth( keypoint );
         
+        double d = findDepth( keypoint );
         if( d >= 0 )
         {
             
@@ -71,9 +71,11 @@ void Frame::keypoints_detect()
             depths_.push_back(d);
         }
     }
+    
 }
 void Frame::descriptor_compute()
-{
+
+{   //orb_->compute(color_, keypoints_raw, descriptors_raw );
     orb_->compute(color_, keypoints_, descriptors_ );
 }
 
@@ -98,6 +100,7 @@ double Frame::findDepth ( const cv::KeyPoint& kp )//接受一个特征点，返�
             {
                 return double(d)/depth_scale_;
             }
+           
         }
     }
     return -1.0;

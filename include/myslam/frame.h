@@ -36,8 +36,10 @@ public:
     cv::Ptr<cv::ORB>               orb_;
     
     std::vector<cv::KeyPoint>      keypoints_;
+    //std::vector<cv::KeyPoint>      keypoints_raw;
     vector<double>                 depths_;
     cv::Mat                        descriptors_;
+    //cv::Mat                        descriptors_raw;
     vector<cv::Point3f>            points_3d_;
     SE3                            T_c_w_;
     
@@ -51,7 +53,7 @@ public:
     int num_of_features_;   // number of features
     double scale_factor_;   // scale in image pyramid
     int level_pyramid_;     // number of pyramid levels
-    double depth_scale_ ;
+    float depth_scale_ ;
     
 public: // data members 
     Frame();

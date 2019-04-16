@@ -106,6 +106,7 @@ int main ( int argc, char** argv )
     cv::Point3d line_begin = cv::Point3d( 0.0, 0.0, 0.0 );
     
     for ( int i=0; i<rgb_files.size(); i++ )
+
     {
         //imread参数默认为1，若为>0则读取3通道图片，若为=0，则读取灰度图片，若为<0则读取原图片
         Mat color = cv::imread ( rgb_files[i] );
